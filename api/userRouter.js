@@ -53,7 +53,9 @@ const getUser = async (req, res) => {
       res.status(404).json({ error: "user NotFound" });
     }
 
-    const bookedSlots = await User.find({ "slots.userId": user._id });
+    const bookedSlots = await User.find({ "slots.userId": user._id }).select(
+      "_id, slots.$"
+    );
     res.json({ ...user, bookedSlots });
   } catch (error) {
     console.log(error);

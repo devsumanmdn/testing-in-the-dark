@@ -6,7 +6,9 @@ import Link from "next/link";
 
 function Wrapper({ children, auth }) {
   useEffect(() => {
-    Router.push("/");
+    if (auth.loggedIn) {
+      Router.push("/");
+    }
   }, [auth.loggedIn]);
 
   return (
@@ -15,6 +17,11 @@ function Wrapper({ children, auth }) {
         <li>
           <Link href={"/"}>
             <a>Home</a>
+          </Link>
+        </li>
+        <li>
+          <Link href={"/users"}>
+            <a>Users</a>
           </Link>
         </li>
         {!auth.loggedIn ? (

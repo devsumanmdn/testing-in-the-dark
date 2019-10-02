@@ -3,9 +3,11 @@ import { composeWithDevTools } from "redux-devtools-extension";
 import thunk from "redux-thunk";
 
 import auth from "./auth/authReducer";
+import slots from "./slots/slotsReducer";
 
 const rootReducer = combineReducers({
-  auth
+  auth,
+  slots
 });
 
 const makeStore = (initialState = {}) => {
