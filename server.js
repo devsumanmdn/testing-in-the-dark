@@ -1,9 +1,13 @@
+require("dotenv").config();
 const https = require("https");
 const path = require("path");
 const express = require("express");
 const next = require("next");
+const bodyParser = require("body-parser");
 
 const getHttpsCerts = require("./config/https.config");
+require("./config/mongoose.config");
+const apiRouter = require("./api");
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 const dev = process.env.NODE_ENV !== "production";
@@ -12,25 +16,18 @@ const handle = app.getRequestHandler();
 
 const expressApp = express();
 
+expressApp.use(bodyParser.urlencoded({ extended: true }));
+expressApp.use(bodyParser.json());
+
 if (!process.env.PORT) {
   process.env.PORT = 3000;
 }
 
 expressApp.set("port", process.env.PORT);
 
+expressApp.use("/api", apiRouter);
+
 app.prepare().then(() => {
-  expressApp.get("/a", (req, res) => {
-    return app.render(req, res, "/a", req.query);
-  });
-
-  expressApp.get("/b", (req, res) => {
-    return app.render(req, res, "/b", req.query);
-  });
-
-  expressApp.get("/posts/:id", (req, res) => {
-    return app.render(req, res, "/posts", { id: req.params.id });
-  });
-
   expressApp.get("*", (req, res) => {
     return handle(req, res);
   });
