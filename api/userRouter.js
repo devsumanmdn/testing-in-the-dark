@@ -30,7 +30,12 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     console.log(req.body);
     if (email && password) {
-      const user = await User.findOne({ email, password });
+      const user = await User.findOne({ email, password }).lean();
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: "Email or password is incorrect!" });
+      }
       res.json(user);
     } else {
       res.status(400).json({ error: "invalid email and passwords!" });
@@ -48,14 +53,14 @@ const logout = (req, res) => {
 const getUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).lean();
     if (!user) {
       res.status(404).json({ error: "user NotFound" });
     }
 
-    const bookedSlots = await User.find({ "slots.userId": user._id }).select(
-      "_id, slots.$"
-    );
+    const bookedSlots = await User.find({ "slots.userId": user._id })
+      .select("_id, slots.$")
+      .lean();
     res.json({ ...user, bookedSlots });
   } catch (error) {
     console.log(error);
@@ -69,11 +74,22 @@ const updateUser = (req, res) => {
   User.findOneAndUpdate({ _id: userId }, updates); // FIXME just for testing
 };
 
-const updateSlots = (req, res) => {
-  const { userId } = req.params;
-  const { slots } = JSON.parse(JSON.stringify(req.body));
-  User.findOneAndUpdate({ _id: userId }, { slots }); // FIXME just for testing
+const updateSlots = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { slots } = JSON.parse(JSON.stringify(req.body));
+    await User.findOneAndUpdate({ _id: userId }, { slots }); // FIXME just for testing
+    res.sendStatus(200);
+  } catch (error) {
+    console.log(error);
+
+    res.sendStatus(500);
+  }
 };
+
+usersRouter.route("/login").post(login);
+
+usersRouter.route("/logout").get(logout);
 
 usersRouter
   .route("/")
@@ -86,9 +102,5 @@ usersRouter
   .post(updateUser);
 
 usersRouter.route("/:userId/slots").post(updateSlots);
-
-usersRouter.route("/login").post(login);
-
-usersRouter.route("/logout").get(logout);
 
 module.exports = usersRouter;

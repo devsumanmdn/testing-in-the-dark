@@ -12,14 +12,14 @@ const initialState = {
 };
 
 export default (state = initialState, action) => {
-  const { type, playload } = action;
+  const { type, payload } = action;
   switch (type) {
     case SIGNUP_SUCCESS:
     case LOGIN_SUCCESS:
       return {
         ...state,
-        ownSlots: playload.user.slots || [],
-        bookedSlots: playload.user.bookedSlots || []
+        ownSlots: payload.user.slots || [],
+        bookedSlots: payload.user.bookedSlots || []
       };
     default:
       return state;

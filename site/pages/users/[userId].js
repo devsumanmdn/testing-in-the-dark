@@ -16,8 +16,9 @@ const SlotButton = styled.button`
   transition-duration: 0.3s;
   cursor: pointer;
 
-  &.selected {
+  &.selected.occupied {
     background-color: #22f;
+    color: #fff;
   }
 
   &.occupied {
@@ -34,6 +35,7 @@ const SlotButton = styled.button`
 function UserProfile({ router, slots, auth }) {
   const [userData, setUserData] = useState(null);
   const userId = router.query && router.query.userId ? router.query.userId : "";
+  const authUserId = auth.user && auth.user._id ? auth.user._id : null;
   useEffect(() => {
     axios("/api/users/" + userId).then(({ data }) => {
       setUserData(data);
@@ -42,18 +44,18 @@ function UserProfile({ router, slots, auth }) {
 
   const selectSlot = slot => {
     const newSlot = {
-      startDate: slot.toDate(),
-      endDate: slot.add(1, "h").toDate(),
-      userId: auth.loggedIn ? auth.user._id : ""
+      startTime: slot.toDate(),
+      endTime: slot.add(1, "h").toDate(),
+      userId: authUserId
     };
     axios({
       url: `/api/users/${userId}/slots`,
       method: "post",
-      data: { slots: [...userData.slots, newSlot] }
+      data: { slots: [...(userData.slots || []), newSlot] }
     }).then(() => {
       setUserData({
         ...userData,
-        slots: [...userData.slots, newSlot]
+        slots: [...(userData.slots || []), newSlot]
       });
     });
   };
@@ -63,13 +65,30 @@ function UserProfile({ router, slots, auth }) {
       <div>{`userId: ${userId}`}</div>
       <div>
         {new Array(24).fill(null).map((_, index) => {
-          const slot = moment(index, "HH");
-          const formatted = slot.format("hh A");
-          const selected = slots;
-          const occupied =
+          const slot = moment.tz(
+            index,
+            "HH",
+            (userData && userData.timeZone) || "Asia/Calcutta"
+          );
+          const formatted = slot.tz(moment.tz.guess()).format("hh A");
+          const selected = !!(
             userData &&
             userData.slots &&
-            userData.slots.find(slot => slot.startTime === slot.toDate());
+            userData.slots.find(
+              ({ startTime, userId }) =>
+                new Date(startTime).getTime() === slot.toDate().getTime() &&
+                slot.userId === authUserId
+            )
+          );
+          const occupied = !!(
+            userData &&
+            userData.slots &&
+            userData.slots.find(
+              ({ startTime }) =>
+                new Date(startTime).getTime() === slot.toDate().getTime()
+            )
+          );
+          console.log({ selected, occupied });
           return (
             <SlotButton
               className={clsx({ occupied, selected })}
@@ -81,6 +100,7 @@ function UserProfile({ router, slots, auth }) {
             </SlotButton>
           );
         })}
+        {JSON.stringify(userData)}
       </div>
     </div>
   );

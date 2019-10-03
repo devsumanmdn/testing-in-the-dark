@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 import {
   SIGNUP_REQUEST,
   SIGNUP_SUCCESS,
@@ -8,8 +10,14 @@ import {
   LOGOUT
 } from "./authActionTypes";
 
+const { ObjectId } = Types;
+
+const userId = new ObjectId().toString();
+
 const initialState = {
-  user: null,
+  user: {
+    _id: userId
+  },
   loggedIn: false,
   loggingIn: false,
   loggingInError: "",
